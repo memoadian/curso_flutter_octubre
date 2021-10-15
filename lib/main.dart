@@ -82,22 +82,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-/*
-Card(
-          elevation: 4,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset("assets/flutter_logo.png"),
-                const Text("Este es el contenido de mi card"),
-                ElevatedButton(
-                  onPressed: () {},
-                  child: const Text("Ver detalle"),
-                ),
-              ],
-            ),
-          ),
-        ),
-*/

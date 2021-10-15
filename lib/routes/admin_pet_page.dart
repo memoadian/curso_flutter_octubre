@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_proyecto/widgets/Drawer.dart';
+import 'package:mi_proyecto/widgets/pets_list.dart';
 
 class AdminPetPage extends StatefulWidget {
   const AdminPetPage({Key? key}) : super(key: key);
