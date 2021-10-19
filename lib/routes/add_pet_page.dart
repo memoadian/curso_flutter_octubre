@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mi_proyecto/main.dart';
+import 'package:mi_proyecto/models_api/pet.dart';
+import 'package:mi_proyecto/models_api/pet_key_value.dart';
+import 'package:http/http.dart' as http;
 
 class AddPetPage extends StatelessWidget {
   const AddPetPage({Key? key}) : super(key: key);
@@ -27,31 +32,43 @@ class FormAddPet extends StatefulWidget {
 class _FormAddPetState extends State<FormAddPet> {
   List<String> _types = ["perrito", "gatito"];
   String? _selectedType = "Por favor escoge";
+  String _selectedTypeId = "1";
   bool _rescue = false;
 
   XFile? _imageFile;
   ImagePicker _picker = ImagePicker();
   dynamic _pickImageError;
 
-  GlobalKey<FormState> _formKey = GlobalKey();
+  final GlobalKey<FormState> _formKey = GlobalKey();
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+
+  final List<PetKeyValue> _data = [
+    PetKeyValue(key: 'Perrito', value: '1'),
+    PetKeyValue(key: 'Gatito', value: '2'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.always,
         child: Container(
           padding: const EdgeInsets.all(10),
           child: Column(
             children: [
               TextFormField(
+                controller: _nameController,
                 validator: MultiValidator([
                   RequiredValidator(
                     errorText: "Este campo es requerido",
                   ),
                   MinLengthValidator(
                     8,
-                    errorText: "Este campo debe ser un correo",
+                    errorText: "Este campo debe tener al menos 8 caracteres",
                   ),
                 ]),
                 decoration: const InputDecoration(
@@ -61,6 +78,7 @@ class _FormAddPetState extends State<FormAddPet> {
                 ),
               ),
               TextFormField(
+                controller: _descController,
                 validator:
                     RequiredValidator(errorText: "error campo necesario"),
                 keyboardType: TextInputType.multiline,
@@ -72,6 +90,7 @@ class _FormAddPetState extends State<FormAddPet> {
                 ),
               ),
               TextFormField(
+                controller: _ageController,
                 validator: (v) => _validAge(v, "Edad no es numérica"),
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
@@ -81,24 +100,26 @@ class _FormAddPetState extends State<FormAddPet> {
                 ),
               ),
               Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: DropdownButton(
-                    hint: Text("$_selectedType"),
-                    isExpanded: true,
-                    onChanged: (String? value) {
-                      setState(() {
-                        _selectedType = value;
-                      });
-                    },
-                    items: _types
-                        .map(
-                          (v) => DropdownMenuItem(
-                            value: v,
-                            child: Text(v),
-                          ),
-                        )
-                        .toList(),
-                  )),
+                padding: const EdgeInsets.all(16),
+                child: DropdownButton(
+                  hint: Text("$_selectedType"),
+                  isExpanded: true,
+                  items: _data
+                      .map(
+                        (v) => DropdownMenuItem(
+                          value: v,
+                          child: Text("${v.key}"),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (PetKeyValue? value) {
+                    setState(() {
+                      _selectedType = value!.key;
+                      _selectedTypeId = "${value.value}";
+                    });
+                  },
+                ),
+              ),
               SwitchListTile(
                 title: const Text("¿Esta rescatado?"),
                 value: _rescue,
@@ -145,7 +166,22 @@ class _FormAddPetState extends State<FormAddPet> {
   }
 
   void _validateForm() {
-    _formKey.currentState?.validate();
+    showLoaderDialog(context);
+
+    if (_formKey.currentState!.validate()) {
+      Pet pet = Pet(
+        name: _nameController.text,
+        desc: _descController.text,
+        age: (_ageController.text != "") ? int.parse(_ageController.text) : 0,
+        image: _getImage(),
+        typeId: int.parse(_selectedTypeId),
+        statusId: (_rescue) ? 2 : 1,
+      );
+
+      createPost("https://pets.memoadian.com/api/pets", pet.toMap());
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   Widget _imageDefault() {
@@ -167,7 +203,8 @@ class _FormAddPetState extends State<FormAddPet> {
 
   void _pickImage(ImageSource source) async {
     try {
-      final _pickedFile = await _picker.pickImage(source: source);
+      final _pickedFile =
+          await _picker.pickImage(source: source, imageQuality: 25);
       setState(() {
         _imageFile = _pickedFile;
       });
@@ -193,5 +230,52 @@ class _FormAddPetState extends State<FormAddPet> {
         ],
       ),
     );
+  }
+
+  String _getImage() {
+    if (_imageFile == null) return "";
+
+    File _image = File(_imageFile!.path);
+    String base64Image = base64Encode(_image.readAsBytesSync());
+    return base64Image;
+  }
+
+  void showLoaderDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: Row(
+        children: [
+          const CircularProgressIndicator(),
+          Container(
+            margin: const EdgeInsets.only(left: 7),
+            child: const Text("Cargando..."),
+          )
+        ],
+      ),
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  void createPost(String url, Map body) {
+    http.post(Uri.parse(url), body: body).then((http.Response response) {
+      if (response.statusCode < 200 || response.statusCode >= 400) {
+        Navigator.pop(context);
+        throw Exception("Error mandando los datos " + response.body);
+      }
+
+      //Navigator.pushReplacementNamed(context, "/");
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MyApp(),
+        ),
+      );
+    });
   }
 }

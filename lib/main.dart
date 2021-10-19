@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       routes: {
+        //'home': (context) => const HomePetPage(),
         'add': (context) => const AddPetPage(),
         'admin': (context) => const AdminPetPage(),
         'detail': (context) => const DetailPetPage(),

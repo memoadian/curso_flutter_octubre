@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mi_proyecto/models_api/pet.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mi_proyecto/routes/detail_pet_page.dart';
 
 class PetsList extends StatefulWidget {
   const PetsList({Key? key}) : super(key: key);
@@ -52,9 +53,15 @@ class _PetsListState extends State<PetsList> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.network(_pets[index].image),
-            const Text("Este es el contenido de mi card"),
+            Text(_pets[index].image),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () => Navigator.pushNamed(
+                context,
+                'detail',
+                arguments: {
+                  "id": _pets[index].id,
+                },
+              ),
               child: const Text("Ver detalle"),
             ),
           ],

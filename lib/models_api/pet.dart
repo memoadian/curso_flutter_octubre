@@ -34,4 +34,17 @@ class Pet {
       statusId: json['status']['id'],
     );
   }
+
+  Map toMap() {
+    var map = Map<String, dynamic>();
+
+    map['name'] = name;
+    map['desc'] = desc;
+    map['age'] = age.toString();
+    map['image'] = image;
+    map['typeId'] = typeId.toString();
+    map['statusId'] = statusId.toString();
+
+    return map;
+  }
 }
