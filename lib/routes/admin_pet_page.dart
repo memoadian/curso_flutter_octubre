@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mi_proyecto/const.dart';
+import 'package:mi_proyecto/models/fav.dart';
+import 'package:mi_proyecto/models/fav_helper.dart';
 import 'package:mi_proyecto/models_api/pet.dart';
 
 class AdminPetPage extends StatefulWidget {
@@ -12,12 +14,31 @@ class AdminPetPage extends StatefulWidget {
 }
 
 class _AdminPetPageState extends State<AdminPetPage> {
-  List<Pet> _pets = [];
+  final _dbHelper = FavHelper();
+  List<Pet> _pets = []; //vienen de servidor
+  List<Fav> _favorites = []; //vienen de bd interna
 
   @override
   initState() {
     super.initState;
     _getPets();
+    _getFavs();
+  }
+
+  void _getFavs() {
+    _dbHelper.getAllFavs().then((favs) {
+      for (var fav in favs) {
+        _favorites.add(Fav.fromMap(fav));
+      }
+      setState(() {});
+    });
+  }
+
+  void _deleteFav(int? id, int position) async {
+    _dbHelper.deleteFav(id).then((_) {
+      _favorites.removeAt(position);
+      setState(() {});
+    });
   }
 
   Future<void> _getPets() async {
@@ -68,38 +89,17 @@ class _AdminPetPageState extends State<AdminPetPage> {
   }
 
   Widget _favs() {
-    return ListView(
-      children: [
-        const Divider(height: 15),
-        Card(
-          margin: const EdgeInsets.all(5),
-          child: ListTile(
-            title: const Text("Amigo"),
-            subtitle: const Text("Edad: 0 años"),
-            leading: Image.asset('assets/flutter_logo.png'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, 'edit');
-                  },
-                  icon: const Icon(Icons.edit),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.delete),
-                )
-              ],
-            ),
-          ),
-        ),
-      ],
+    return ListView.builder(
+      itemBuilder: listFav,
+      itemCount: _favorites.length,
     );
   }
 
   Widget _server() {
-    return ListView.builder(itemCount: _pets.length, itemBuilder: list);
+    return ListView.builder(
+      itemCount: _pets.length,
+      itemBuilder: list,
+    );
   }
 
   Widget list(context, index) {
@@ -119,6 +119,28 @@ class _AdminPetPageState extends State<AdminPetPage> {
               icon: const Icon(Icons.edit),
             ),
             IconButton(onPressed: () {}, icon: const Icon(Icons.delete))
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget listFav(context, index) {
+    return Card(
+      margin: const EdgeInsets.all(5),
+      child: ListTile(
+        title: Text("${_favorites[index].name}"),
+        subtitle: Text("Edad: ${_favorites[index].age} años"),
+        leading: Image.network(_favorites[index].image),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: () {
+                _deleteFav(_favorites[index].id, index);
+              },
+              icon: const Icon(Icons.delete),
+            ),
           ],
         ),
       ),

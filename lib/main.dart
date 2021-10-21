@@ -4,10 +4,31 @@ import 'package:mi_proyecto/routes/admin_pet_page.dart';
 import 'package:mi_proyecto/routes/detail_pet_page.dart';
 import 'package:mi_proyecto/routes/edit_pet_page.dart';
 import 'package:mi_proyecto/routes/home_pet_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isOrange = false;
+  SharedPreferences? _prefs;
+
+  @override
+  initState() {
+    super.initState();
+    _loadColor();
+  }
+
+  _loadColor() async {
+    _prefs = await SharedPreferences.getInstance();
+    _isOrange = _prefs?.getBool('orange') ?? false;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,28 +41,27 @@ class MyApp extends StatelessWidget {
       },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.orange,
+        primarySwatch: (_isOrange) ? Colors.deepOrange : Colors.green,
       ),
       home: Builder(
         builder: (context) => Scaffold(
           appBar: AppBar(
             title: const Text("Mi primer app"),
+            actions: [
+              Builder(
+                builder: (context) => IconButton(
+                  onPressed: () {
+                    Scaffold.of(context).openEndDrawer();
+                  },
+                  icon: const Icon(Icons.settings),
+                ),
+              ),
+            ],
           ),
           body: const HomePetPage(),
           drawer: Drawer(
             child: ListView(
               children: [
-                /*DrawerHeader(
-                  child: CircleAvatar(
-                    child: Text("Algo"),
-                  ),
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      fit: BoxFit.cover,
-                      image: AssetImage("assets/flutter_logo.png"),
-                    ),
-                  ),
-                ),*/
                 const UserAccountsDrawerHeader(
                   currentAccountPicture: CircleAvatar(
                     backgroundImage: AssetImage("assets/flutter_logo.png"),
@@ -66,15 +86,36 @@ class MyApp extends StatelessWidget {
                   subtitle: const Text("Admin pets"),
                   trailing: const Icon(Icons.arrow_right),
                   onTap: () {
-                    /*Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminPetPage(),
-                      ),
-                    );*/
                     Navigator.pushNamed(context, 'admin');
                   },
                 ),
+              ],
+            ),
+          ),
+          endDrawer: Drawer(
+            child: Column(
+              children: [
+                AppBar(
+                  automaticallyImplyLeading: false,
+                  title: const Text("Settings"),
+                  actions: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    SwitchListTile(
+                      value: _isOrange,
+                      onChanged: (val) => setState(() {
+                        _isOrange = val;
+                        _prefs?.setBool('orange', val);
+                      }),
+                    ),
+                  ],
+                )
               ],
             ),
           ),
