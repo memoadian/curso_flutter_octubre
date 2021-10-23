@@ -38,13 +38,12 @@ class Pet {
   Map toMap() {
     var map = Map<String, dynamic>();
 
-    map["id"] = id;
     map["name"] = name;
     map["desc"] = desc;
-    map["age"] = age;
+    map["age"] = age.toString();
     map["image"] = image;
-    map["typeId"] = typeId;
-    map["statusId"] = statusId;
+    map["typeId"] = typeId.toString();
+    map["statusId"] = statusId.toString();
     return map;
   }
 }

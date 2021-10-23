@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mi_proyecto/main.dart';
+import 'package:mi_proyecto/models_api/pet.dart';
 import 'package:mi_proyecto/models_api/pet_key_value.dart';
 import 'package:http/http.dart' as http;
 
@@ -211,7 +212,22 @@ class _FormAddPetState extends State<FormAddPet> {
   }
 
   void _validateForm() {
-    _formKey.currentState?.validate();
+    showLoaderDialog(context);
+
+    if (_formKey.currentState!.validate()) {
+      Pet _newpet = Pet(
+        name: _nameController.text,
+        age: (_ageController.text != null) ? int.parse(_ageController.text) : 0,
+        desc: _descController.text,
+        typeId: int.parse(_selectedTypeId),
+        image: _getImage(),
+        statusId: _rescue ? 2 : 1,
+      );
+
+      createPost("https://pets.memoadian.com/api/pets", _newpet.toMap());
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   Widget _imageDefault() {
@@ -233,7 +249,8 @@ class _FormAddPetState extends State<FormAddPet> {
 
   void _pickImage(ImageSource source) async {
     try {
-      final _pickedFile = await _picker.pickImage(source: source);
+      final _pickedFile =
+          await _picker.pickImage(source: source, imageQuality: 25);
       setState(() {
         _imageFile = _pickedFile;
       });

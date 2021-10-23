@@ -32,6 +32,12 @@ dependencies:
   image_picker: ^0.8.4+2
   form_field_validator: ^1.1.0
   http: ^0.13.4
+  shared_preferences: ^2.0.8
+  push_notification: ^1.1.0
+  sqflite: ^2.0.0+4
+  path: ^1.8.0
+  path_provider: ^2.0.5
+  fluttertoast: ^8.0.8
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

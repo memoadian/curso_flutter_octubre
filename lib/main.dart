@@ -4,10 +4,52 @@ import 'package:mi_proyecto/routes/admin_pet_page.dart';
 import 'package:mi_proyecto/routes/detail_pet_page.dart';
 import 'package:mi_proyecto/routes/edit_pet_page.dart';
 import 'package:mi_proyecto/routes/home_pet_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:push_notification/push_notification.dart';
 
 void main() => runApp(MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isOrange = false;
+  SharedPreferences? prefs;
+  late Notificator notification;
+  String _bodyText = 'notification test';
+  String notificationKey = 'key';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadColor();
+    notification = Notificator(
+      onPermissionDecline: () {
+        // ignore: avoid_print
+        print('permission decline');
+      },
+      onNotificationTapCallback: (notificationData) {
+        setState(
+          () {
+            _bodyText = 'notification open: '
+                '${notificationData[notificationKey].toString()}';
+          },
+        );
+      },
+    )..requestPermissions(
+        requestSoundPermission: true,
+        requestAlertPermission: true,
+      );
+  }
+
+  void _loadColor() async {
+    prefs = await SharedPreferences.getInstance();
+    _isOrange = (prefs?.getBool('orange')) ?? false;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,7 +61,7 @@ class MyApp extends StatelessWidget {
       },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.orange,
+        primarySwatch: (_isOrange) ? Colors.orange : Colors.green,
       ),
       home: Builder(
         builder: (context) => Scaffold(
@@ -30,17 +72,6 @@ class MyApp extends StatelessWidget {
           drawer: Drawer(
             child: ListView(
               children: [
-                /*DrawerHeader(
-                  child: CircleAvatar(
-                    child: Text("Algo"),
-                  ),
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      fit: BoxFit.cover,
-                      image: AssetImage("assets/flutter_logo.png"),
-                    ),
-                  ),
-                ),*/
                 const UserAccountsDrawerHeader(
                   currentAccountPicture: CircleAvatar(
                     backgroundImage: AssetImage("assets/flutter_logo.png"),
@@ -65,16 +96,59 @@ class MyApp extends StatelessWidget {
                   subtitle: const Text("Admin pets"),
                   trailing: const Icon(Icons.arrow_right),
                   onTap: () {
-                    /*Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminPetPage(),
-                      ),
-                    );*/
                     Navigator.pushNamed(context, 'admin');
                   },
                 ),
               ],
+            ),
+          ),
+          endDrawer: Drawer(
+            child: Column(
+              children: [
+                AppBar(
+                  automaticallyImplyLeading: false,
+                  title: const Text("Settings"),
+                  actions: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text("Tema naranja"),
+                      value: _isOrange,
+                      onChanged: (val) {
+                        _isOrange = val;
+                        prefs?.setBool('orange', val);
+                        setState(() {});
+                      },
+                    )
+                  ],
+                )
+              ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              notification.show(
+                1,
+                'hello',
+                'this is test',
+                imageUrl: 'https://www.lumico.io/wp-019/09/flutter.jpg',
+                data: {notificationKey: '[notification data]'},
+                notificationSpecifics: NotificationSpecifics(
+                  AndroidNotificationSpecifics(
+                    autoCancelable: true,
+                  ),
+                ),
+              );
+            },
+            child: const Icon(
+              Icons.notifications,
+              color: Colors.white,
             ),
           ),
         ),
