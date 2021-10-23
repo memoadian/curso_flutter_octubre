@@ -38,6 +38,8 @@ class _PetsListState extends State<PetsList> {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      cacheExtent: 9999,
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _pets.length,
       itemBuilder: _buildItemsForListView,
     );
@@ -54,7 +56,11 @@ class _PetsListState extends State<PetsList> {
             Image.network(_pets[index].image),
             const Text("Este es el contenido de mi card"),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () => Navigator.pushNamed(
+                context,
+                "detail",
+                arguments: {"id": _pets[index].id},
+              ),
               child: const Text("Ver detalle"),
             ),
           ],
